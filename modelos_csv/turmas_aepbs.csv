@@ -1,0 +1,27 @@
+codigo;designacao;ano;dt_nome;dt_email
+5A;5º Ano A;5;Helena Marques;helena.marques@aepbs.pt
+5B;5º Ano B;5;Bruno Pinto;bruno.pinto@aepbs.pt
+5C;5º Ano C;5;Inês Carvalho;ines.carvalho@aepbs.pt
+6A;6º Ano A;6;Nuno Teixeira;nuno.teixeira@aepbs.pt
+6B;6º Ano B;6;Marta Correia;marta.correia@aepbs.pt
+6C;6º Ano C;6;Filipe Rocha;filipe.rocha@aepbs.pt
+7A;7º Ano A;7;Sandra Nunes;sandra.nunes@aepbs.pt
+7B;7º Ano B;7;André Moreira;andre.moreira@aepbs.pt
+7C;7º Ano C;7;Cláudia Barbosa;claudia.barbosa@aepbs.pt
+8A;8º Ano A;8;Vítor Cardoso;vitor.cardoso@aepbs.pt
+8B;8º Ano B;8;Patrícia Mendes;patricia.mendes@aepbs.pt
+8C;8º Ano C;8;Luís Oliveira;luis.oliveira@aepbs.pt
+9A;9º Ano A;9;Teresa Faria;teresa.faria@aepbs.pt
+9B;9º Ano B;9;Ricardo Gomes;ricardo.gomes@aepbs.pt
+9C;9º Ano C;9;Joana Matos;joana.matos@aepbs.pt
+10A;10º A — Ciências e Tecnologias;10;Maria Silva;maria.silva@aepbs.pt
+10B;10º B — Ciências Socioeconómicas;10;João Pereira;joao.pereira@aepbs.pt
+10C;10º C — Línguas e Humanidades;10;Ana Costa;ana.costa@aepbs.pt
+11A;11º A — Ciências e Tecnologias;11;Rui Martins;rui.martins@aepbs.pt
+11B;11º B — Ciências Socioeconómicas;11;Sofia Almeida;sofia.almeida@aepbs.pt
+11C;11º C — Línguas e Humanidades;11;Pedro Sousa;pedro.sousa@aepbs.pt
+12A;12º A — Ciências e Tecnologias;12;Carla Rodrigues;carla.rodrigues@aepbs.pt
+12B;12º B — Línguas e Humanidades;12;Miguel Fernandes;miguel.fernandes@aepbs.pt
+10PSI;10º PSI — Programação e Sistemas de Informação;10;Rita Gonçalves;rita.goncalves@aepbs.pt
+11PSI;11º PSI — Programação e Sistemas de Informação;11;Tiago Lopes;tiago.lopes@aepbs.pt
+12PSI;12º PSI — Programação e Sistemas de Informação;12;Paulo Neves;paulo.neves@aepbs.pt

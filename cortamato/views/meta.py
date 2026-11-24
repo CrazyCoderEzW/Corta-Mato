@@ -224,9 +224,101 @@ def construir(app) -> ft.Control:
         ) if ocorrencias else common.aviso("Sem ocorrências registadas."),
     )
 
+    # ------------------------------------------------------------------
+    # Gráfico de evolução das chegadas (linha acumulada)
+    # ------------------------------------------------------------------
+    def minutos(hora) -> float | None:
+        """Converte a hora da chegada (datetime, time ou texto) em minutos."""
+        horas = getattr(hora, "hour", None)
+        mins = getattr(hora, "minute", None)
+        segs = getattr(hora, "second", 0) or 0
+        if horas is None:
+            partes = str(hora or "").strip().split(":")
+            if len(partes) < 2:
+                return None
+            try:
+                horas, mins = int(partes[0]), int(partes[1])
+                segs = int(float(partes[2])) if len(partes) > 2 else 0
+            except ValueError:
+                return None
+        return int(horas) * 60 + int(mins) + int(segs) / 60
+
+    def rotulo_hora(minutos_totais: float) -> str:
+        total = int(round(minutos_totais)) % (24 * 60)
+        return f"{total // 60:02d}:{total % 60:02d}"
+
+    marcados: list[tuple[float, int]] = []
+    for item in chegadas:
+        momento = minutos(item.get("hora"))
+        if momento is not None:
+            marcados.append((momento, int(item["ordem"])))
+    marcados.sort()
+
+    if marcados:
+        inicio = marcados[0][0]
+        pontos = [
+            ft.LineChartDataPoint(x=round(momento - inicio, 1), y=ordem)
+            for momento, ordem in marcados
+        ]
+        duracao = max(ponto.x for ponto in pontos)
+        topo = max(ordem for _momento, ordem in marcados)
+        grafico: ft.Control = ft.LineChart(
+            data_series=[
+                ft.LineChartData(
+                    data_points=pontos,
+                    stroke_width=3,
+                    color=common.VERDE,
+                    curved=True,
+                    stroke_cap_round=True,
+                )
+            ],
+            min_x=0,
+            max_x=max(duracao, 1),
+            min_y=0,
+            max_y=max(topo, 1),
+            bottom_axis=ft.ChartAxis(
+                labels=[
+                    ft.ChartAxisLabel(
+                        value=momento,
+                        label=ft.Container(
+                            content=ft.Text(rotulo_hora(inicio + momento), size=9,
+                                            color=common.TEXTO_SUAVE),
+                            padding=ft.padding.only(top=6),
+                        ),
+                    )
+                    for momento in sorted({0.0, round(duracao / 2, 1), round(duracao, 1)})
+                ],
+                labels_size=26,
+            ),
+            left_axis=ft.ChartAxis(labels_size=26),
+            horizontal_grid_lines=ft.ChartGridLines(
+                color=common.CINZA_BORDA, width=1, dash_pattern=[3, 3]
+            ),
+            height=170,
+        )
+        nota_final = common.subtitulo(
+            f"{topo} chegadas em {int(round(duracao))} min "
+            f"(das {rotulo_hora(inicio)} às {rotulo_hora(inicio + duracao)})."
+        )
+    else:
+        grafico = common.vazio(
+            "A evolução das chegadas aparece aqui assim que forem registadas."
+        )
+        nota_final = common.subtitulo(
+            "Cada ponto da linha corresponde a uma chegada registada no funil de meta."
+        )
+
+    cartao_grafico = common.cartao(
+        common.titulo_seccao("Evolução das chegadas", ft.Icons.SHOW_CHART),
+        common.subtitulo("Chegadas acumuladas ao longo do tempo, na ordem registada."),
+        grafico,
+        nota_final,
+    )
+
     return ft.Column(
         [common.titulo("Secretariado de meta"),
          bloco_registo,
+         cartao_grafico,
          common.cartao(ft.Text(f"Chegadas registadas ({len(chegadas)})", size=15,
                                weight=ft.FontWeight.BOLD), tabela_chegadas),
          bloco_ocorrencias],

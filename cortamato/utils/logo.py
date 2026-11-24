@@ -20,6 +20,12 @@ NOME_GERADO = "desporto_escolar_transparente.png"
 #: Emblema recortado, sem a legenda (para fundos escuros).
 NOME_EMBLEMA = "desporto_escolar_emblema.png"
 
+#: Versão do logótipo numa cor sólida, para fundos claros.
+NOME_ESCURO = "desporto_escolar_escuro.png"
+
+#: Verde da marca (equivalente a `common.VERDE_PROFUNDO`).
+COR_ESCURA = (3, 58, 35)
+
 #: Ficheiros sem fundo aceites, vindos da pasta do projeto.
 NOMES_ENTRADA = (
     "desporto_escolar-removebg-preview.png",
@@ -61,6 +67,34 @@ def instalar(pasta_assets: Path, nome: str = "desporto_escolar.png") -> None:
     regiao = _regiao_emblema(pixeis, largura, altura)
     if regiao is not None:
         _gravar_regiao(emblema, pixeis, largura, altura, regiao)
+
+
+def instalar_escuro(pasta_assets: Path, origem_nome: str = "desporto_escolar.png",
+                    destino_nome: str = NOME_ESCURO,
+                    cor: tuple[int, int, int] = COR_ESCURA) -> None:
+    """Gera o logótipo numa cor sólida (mantendo a transparência).
+
+    O ficheiro original é branco, feito para fundos escuros; esta versão é
+    usada sobre cabeçalhos e cartões claros.
+    """
+    origem = pasta_assets / origem_nome
+    destino = pasta_assets / destino_nome
+    if not origem.is_file():
+        return
+    try:
+        if destino.is_file() and destino.stat().st_mtime >= origem.stat().st_mtime:
+            return
+    except OSError:
+        pass
+
+    dados = _abrir(origem)
+    if dados is None:
+        return
+    pixeis, largura, altura = dados
+    for i in range(0, len(pixeis), 4):
+        if pixeis[i + 3]:
+            pixeis[i], pixeis[i + 1], pixeis[i + 2] = cor
+    _gravar(destino, pixeis, largura, altura)
 
 
 def _entrada(pasta_assets: Path, destino: Path) -> Path | None:

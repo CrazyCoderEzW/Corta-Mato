@@ -49,8 +49,9 @@ def main(page: ft.Page) -> None:
 
     page.window.width = 1320
     page.window.height = 860
-    page.window.min_width = 1080
-    page.window.min_height = 680
+    # Permite testar/redimensionar para larguras de telemóvel.
+    page.window.min_width = 360
+    page.window.min_height = 500
 
     try:
         base_dados = BD()

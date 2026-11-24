@@ -42,12 +42,16 @@ LOGO = "desporto_escolar.png"
 #: Emblema recortado, sem a legenda verde (para fundos escuros).
 EMBLEMA = "desporto_escolar_emblema.png"
 
+#: Logótipo na cor verde da marca, para fundos claros (gerado automaticamente).
+LOGO_ESCURO = "desporto_escolar_escuro.png"
+
 #: Pasta de recursos gráficos da aplicação.
 PASTA_ASSETS = Path(__file__).resolve().parents[2] / "assets"
 
 # Garante o logótipo sem fundo em `assets` (ver `cortamato/utils/logo.py`).
 try:
     logo_util.instalar(PASTA_ASSETS, LOGO)
+    logo_util.instalar_escuro(PASTA_ASSETS, LOGO, LOGO_ESCURO)
 except Exception:  # noqa: BLE001 - o logótipo nunca deve impedir o arranque
     pass
 
@@ -221,18 +225,22 @@ def aviso(texto: str, cor: str = AVISO) -> ft.Container:
 # Indicadores
 # ---------------------------------------------------------------------------
 def indicador(rotulo: str, valor, icone=None, cor: str = VERDE,
-              largura: int | None = 190, col=None) -> ft.Container:
+              largura: int | None = 190, col=None, centrado: bool = False,
+              tamanho_icone: int = 17, tamanho_valor: int = 26) -> ft.Container:
+    """Cartão de indicador. Com `centrado=True` alinha ícone, rótulo e valor ao meio."""
     grelha = {} if col is None else {"col": col}
+    lado = tamanho_icone + 13
     return ft.Container(
         content=ft.Column(
             [
                 ft.Row(
                     [
                         ft.Container(
-                            content=ft.Icon(icone or ft.Icons.INSIGHTS, size=17, color=cor),
+                            content=ft.Icon(icone or ft.Icons.INSIGHTS, size=tamanho_icone,
+                                            color=cor),
                             bgcolor=_tom(cor),
-                            width=30,
-                            height=30,
+                            width=lado,
+                            height=lado,
                             border_radius=9,
                             alignment=ft.Alignment(0, 0),
                         ),
@@ -243,16 +251,25 @@ def indicador(rotulo: str, valor, icone=None, cor: str = VERDE,
                             weight=ft.FontWeight.BOLD,
                             max_lines=2,
                             overflow=ft.TextOverflow.ELLIPSIS,
-                            expand=True,
+                            expand=not centrado,
+                            text_align=ft.TextAlign.CENTER if centrado else None,
                         ),
                     ],
                     spacing=8,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment=(ft.MainAxisAlignment.CENTER if centrado
+                               else ft.MainAxisAlignment.START),
                 ),
-                ft.Text(str(valor), size=26, weight=ft.FontWeight.BOLD, color=TEXTO),
+                ft.Text(str(valor), size=tamanho_valor, weight=ft.FontWeight.BOLD,
+                        color=TEXTO,
+                        text_align=ft.TextAlign.CENTER if centrado else None),
             ],
             spacing=8,
             tight=True,
+            # Centrado: as linhas esticam na largura para o texto ficar no
+            # meio exato do cartão (e não encostado ao ícone).
+            horizontal_alignment=(ft.CrossAxisAlignment.STRETCH if centrado
+                                  else ft.CrossAxisAlignment.START),
         ),
         bgcolor="#FFFFFF",
         padding=14,

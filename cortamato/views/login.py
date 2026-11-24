@@ -114,6 +114,12 @@ def construir(app) -> ft.Control:
     campo_password.on_change = limpar_erro
     campo_password.on_submit = entrar
 
+    # Em ecrãs estreitos o formulário encolhe para caber no telemóvel.
+    largura_ecra = getattr(app.page, "width", None)
+    largura = LARGURA_FORMULARIO
+    if largura_ecra:
+        largura = max(240, min(LARGURA_FORMULARIO, int(largura_ecra) - 48))
+
     # Sem cartão branco: o formulário assenta diretamente na fotografia.
     formulario = ft.Container(
         content=ft.Column(
@@ -135,7 +141,7 @@ def construir(app) -> ft.Control:
                     "Entrar",
                     icon=ft.Icons.LOGIN,
                     on_click=entrar,
-                    width=LARGURA_FORMULARIO,
+                    width=largura,
                     height=48,
                     bgcolor=common.VERDE,
                     color="#FFFFFF",
@@ -149,7 +155,7 @@ def construir(app) -> ft.Control:
             spacing=12,
             horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
         ),
-        width=LARGURA_FORMULARIO,
+        width=largura,
     )
 
     conteudo = ft.Container(

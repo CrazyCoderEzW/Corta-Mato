@@ -7,18 +7,32 @@ import flet as ft
 from ..controllers.base import ErroValidacao, PermissaoNegada
 from . import common
 
+#: Campo, rótulo e largura na grelha de 12 colunas do formulário.
 CHAVES_FORMULARIO = [
-    ("designacao_atividade", "Designação da atividade", 300),
-    ("edicao", "Edição (ex.: 2026/2027)", 180),
-    ("data_prova", "Data da prova (dd/mm/aaaa)", 180),
-    ("hora_partida", "Hora da primeira partida", 180),
-    ("local", "Local da prova", 300),
-    ("prazo_inscricoes", "Prazo de inscrições (dd/mm/aaaa)", 200),
-    ("ano_referencia_idades", "Ano de referência das idades", 200),
-    ("dorsais_inicio", "Primeiro dorsal", 150),
-    ("apurados_por_escalao", "Apurados por escalão/sexo", 190),
-    ("pontos_coletiva", "Elementos que pontuam por equipa", 210),
-    ("email_remetente", "E-mail remetente das comunicações", 280),
+    ("designacao_atividade", "Designação da atividade",
+     {"xs": 12, "sm": 6, "md": 6, "lg": 6}),
+    ("edicao", "Edição (ex.: 2026/2027)", {"xs": 6, "sm": 3, "lg": 3}),
+    ("data_prova", "Data da prova (dd/mm/aaaa)", {"xs": 6, "sm": 3, "lg": 3}),
+    ("hora_partida", "Hora da primeira partida", {"xs": 6, "sm": 3, "lg": 3}),
+    ("local", "Local da prova", {"xs": 12, "sm": 6, "lg": 6}),
+    ("prazo_inscricoes", "Prazo de inscrições (dd/mm/aaaa)",
+     {"xs": 6, "sm": 3, "lg": 3}),
+    ("ano_referencia_idades", "Ano de referência das idades", {"xs": 6, "sm": 3, "lg": 3}),
+    ("dorsais_inicio", "Primeiro dorsal", {"xs": 6, "sm": 3, "lg": 3}),
+    ("apurados_por_escalao", "Apurados por escalão/sexo", {"xs": 6, "sm": 3, "lg": 3}),
+    ("pontos_coletiva", "Elementos que pontuam por equipa", {"xs": 6, "sm": 3, "lg": 3}),
+    ("email_remetente", "E-mail remetente das comunicações",
+     {"xs": 12, "sm": 12, "md": 12, "lg": 12}),
+]
+
+#: Secções do formulário (título e campos, pela ordem de `CHAVES_FORMULARIO`).
+GRUPOS_FORMULARIO = [
+    ("Atividade e datas",
+     ("designacao_atividade", "edicao", "data_prova", "hora_partida",
+      "local", "prazo_inscricoes")),
+    ("Regras de apuramento",
+     ("ano_referencia_idades", "dorsais_inicio", "apurados_por_escalao",
+      "pontos_coletiva", "email_remetente")),
 ]
 
 
@@ -32,12 +46,21 @@ def construir(app) -> ft.Control:
     # ------------------------------------------------------------------
     chaves_data = {"data_prova", "prazo_inscricoes"}
     campos: dict[str, object] = {}
-    for chave, rotulo, largura in CHAVES_FORMULARIO:
+    for chave, rotulo, colunas in CHAVES_FORMULARIO:
+        # Sem largura fixa: cada campo estica para preencher a sua coluna.
         if chave in chaves_data:
             campos[chave] = common.campo_data(page, rotulo.replace(" (dd/mm/aaaa)", ""),
-                                             valores.get(chave, ""), largura)
+                                             valores.get(chave, ""), None, 1)
         else:
-            campos[chave] = common.campo(rotulo, valores.get(chave, ""), largura)
+            campos[chave] = common.campo(rotulo, valores.get(chave, ""), None)
+
+    # Campos brancos com contorno: destacam-se do cartão sem o tom acinzentado
+    # do preenchimento por omissão.
+    for item in campos.values():
+        alvo = item.campo if isinstance(item, common.CampoData) else item
+        alvo.fill_color = "#FFFFFF"
+        alvo.border = ft.InputBorder.OUTLINE
+        alvo.border_color = common.CINZA_BORDA
 
     def controlo(chave: str) -> ft.Control:
         item = campos[chave]
@@ -52,10 +75,50 @@ def construir(app) -> ft.Control:
         common.mensagem(page, "Configuração da atividade guardada.")
         app.navegar("configuracoes")
 
+    colunas_por_chave = {chave: colunas for chave, _r, colunas in CHAVES_FORMULARIO}
+
+    def seccao(titulo: str, chaves: tuple[str, ...]) -> ft.Control:
+        """Título pequeno + grelha de campos dessa secção."""
+        celulas = [
+            ft.Container(content=controlo(chave), col=colunas_por_chave[chave])
+            for chave in chaves
+        ]
+        return ft.Column(
+            [
+                ft.Text(titulo.upper(), size=10, weight=ft.FontWeight.BOLD,
+                        color=common.VERDE_TEXTO),
+                ft.ResponsiveRow(celulas, spacing=12, run_spacing=16),
+            ],
+            spacing=8,
+            tight=True,
+        )
+
+    # Barra de ações: dica à esquerda, botão encostado à direita.
+    barra_acoes = ft.Container(
+        content=ft.Row(
+            [
+                ft.Text("As alterações ficam disponíveis de imediato em toda a prova.",
+                        size=11, color=common.TEXTO_SUAVE, expand=True),
+                common.botao("Guardar configuração", guardar_atividade,
+                             icone=ft.Icons.SAVE),
+            ],
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        ),
+        bgcolor=common.CINZA_SUAVE,
+        border=ft.border.all(1, common.CINZA_BORDA),
+        border_radius=12,
+        padding=ft.padding.symmetric(horizontal=14, vertical=10),
+    )
+
     bloco_atividade = common.cartao(
-        ft.Text("Dados da atividade", size=15, weight=ft.FontWeight.BOLD),
-        ft.Row([controlo(chave) for chave, _r, _l in CHAVES_FORMULARIO], wrap=True, spacing=12),
-        ft.Row([common.botao("Guardar configuração", guardar_atividade, icone=ft.Icons.SAVE)]),
+        common.titulo_seccao("Dados da atividade", ft.Icons.EDIT_NOTE),
+        common.subtitulo(
+            "Informação usada no painel, nos dorsais, nas classificações e nas comunicações."
+        ),
+        *[seccao(titulo, chaves) for titulo, chaves in GRUPOS_FORMULARIO],
+        barra_acoes,
+        espacamento=14,
+        preenchimento=16,
     )
 
     # ------------------------------------------------------------------
@@ -74,6 +137,14 @@ def construir(app) -> ft.Control:
     campo_idade_max = common.campo("Idade máxima", "", 130)
     campo_apurados = common.campo("Apurados", "6", 110)
     campo_ativo = ft.Checkbox(label="Ativo", value=True)
+
+    # Mesmo tratamento visual dos campos da atividade: sem largura fixa, para
+    # esticarem na grelha, e com fundo branco sobre o cartão.
+    for campo_escalao in (seletor, campo_designacao, campo_sexo,
+                          campo_idade_min, campo_idade_max, campo_apurados):
+        campo_escalao.width = None
+        campo_escalao.fill_color = "#FFFFFF"
+        campo_escalao.border_color = common.CINZA_BORDA
 
     def carregar_escalao(_evento=None):
         if not seletor.value:
@@ -132,19 +203,34 @@ def construir(app) -> ft.Control:
     )
 
     bloco_escaloes = common.cartao(
-        ft.Text("Escalões etários por sexo", size=15, weight=ft.FontWeight.BOLD),
+        common.titulo_seccao("Escalões etários por sexo", ft.Icons.CATEGORY),
         common.subtitulo(
             "A idade é calculada a partir do ano de referência definido acima. "
             "Os apurados indicam quantos atletas passam à fase seguinte "
             "(0 = usar o valor global das configurações)."
         ),
-        ft.Row([seletor], wrap=True, spacing=12),
-        ft.Row([campo_designacao, campo_sexo, campo_idade_min, campo_idade_max,
-                campo_apurados], wrap=True, spacing=12),
-        ft.Row([campo_ativo, common.botao("Guardar escalão", guardar_escalao),
-                common.botao("Novo escalão", limpar_escalao, principal=False)]),
+        ft.ResponsiveRow(
+            [
+                ft.Container(seletor, col={"xs": 12, "lg": 6}),
+                ft.Container(campo_designacao, col={"xs": 12, "lg": 6}),
+                ft.Container(campo_sexo, col={"xs": 6, "lg": 4}),
+                ft.Container(campo_idade_min, col={"xs": 6, "lg": 3}),
+                ft.Container(campo_idade_max, col={"xs": 6, "lg": 3}),
+                ft.Container(campo_apurados, col={"xs": 6, "lg": 2}),
+            ],
+            spacing=12,
+            run_spacing=12,
+        ),
+        ft.Row(
+            [campo_ativo, common.botao("Guardar escalão", guardar_escalao),
+             common.botao("Novo escalão", limpar_escalao, principal=False)],
+            spacing=12,
+            wrap=True,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        ),
         common.separador(),
         tabela_escaloes,
+        preenchimento=16,
     )
 
     # ------------------------------------------------------------------
@@ -154,7 +240,7 @@ def construir(app) -> ft.Control:
     alunos = controlador.listar_alunos()[:300]
 
     bloco_turmas = common.cartao(
-        ft.Text("Turmas e diretores de turma", size=15, weight=ft.FontWeight.BOLD),
+        common.titulo_seccao("Turmas e diretores de turma", ft.Icons.SCHOOL),
         common.subtitulo("A importação é feita no módulo «Importações CSV»."),
         common.tabela(
             ["Código", "Designação", "Ano", "Diretor de Turma", "E-mail DT", "Alunos"],
@@ -165,8 +251,8 @@ def construir(app) -> ft.Control:
     )
 
     bloco_alunos = common.cartao(
-        ft.Text(f"Alunos carregados (a mostrar {len(alunos)})", size=15,
-                weight=ft.FontWeight.BOLD),
+        common.titulo_seccao(f"Alunos carregados (a mostrar {len(alunos)})",
+                             ft.Icons.PEOPLE),
         common.tabela(
             ["Nº", "Nome", "Sexo", "Nascimento", "Turma", "Cartão"],
             [[aluno["numero"], aluno["nome"], aluno["sexo"],
@@ -175,12 +261,23 @@ def construir(app) -> ft.Control:
         ),
     )
 
+    # Duas colunas: à esquerda os escalões (formulário + tabela), à direita as
+    # tabelas de turmas e de alunos, que antes ficavam isoladas a toda a largura.
     return ft.Column(
-        [common.titulo("Configurações"),
-         bloco_atividade,
-         bloco_escaloes,
-         bloco_turmas,
-         bloco_alunos],
+        [
+            common.titulo("Configurações"),
+            bloco_atividade,
+            ft.ResponsiveRow(
+                [
+                    ft.Column([bloco_escaloes], col={"xs": 12, "lg": 6},
+                              spacing=14),
+                    ft.Column([bloco_turmas, bloco_alunos], col={"xs": 12, "lg": 6},
+                              spacing=14),
+                ],
+                spacing=14,
+                run_spacing=14,
+            ),
+        ],
         spacing=14,
         scroll=ft.ScrollMode.AUTO,
         expand=True,
