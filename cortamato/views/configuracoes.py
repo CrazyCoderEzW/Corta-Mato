@@ -195,11 +195,12 @@ def construir(app) -> ft.Control:
         common.mensagem(page, "Escalão guardado.")
         app.navegar("configuracoes")
 
-    tabela_escaloes = common.tabela(
+    tabela_escaloes = common.tabela_expandida(
         ["Escalão", "Sexo", "Idades", "Apurados", "Ativo"],
         [[item["designacao"], "M" if item["sexo"] == "M" else "F",
           f"{item['idade_min']}-{item['idade_max']}", item["apurados"],
           "Sim" if item["ativo"] else "Não"] for item in escaloes],
+        pesos=[2.4, 1, 1.6, 1.4, 1],
     )
 
     bloco_escaloes = common.cartao(
@@ -242,36 +243,39 @@ def construir(app) -> ft.Control:
     bloco_turmas = common.cartao(
         common.titulo_seccao("Turmas e diretores de turma", ft.Icons.SCHOOL),
         common.subtitulo("A importação é feita no módulo «Importações CSV»."),
-        common.tabela(
+        common.tabela_expandida(
             ["Código", "Designação", "Ano", "Diretor de Turma", "E-mail DT", "Alunos"],
             [[turma["codigo"], turma["designacao"] or "", turma["ano"] or "",
               turma["dt_nome"] or "", turma["dt_email"] or "", turma["total_alunos"]]
              for turma in turmas],
+            pesos=[1.2, 1.8, 1, 2.4, 2.8, 1],
         ),
     )
 
     bloco_alunos = common.cartao(
         common.titulo_seccao(f"Alunos carregados (a mostrar {len(alunos)})",
                              ft.Icons.PEOPLE),
-        common.tabela(
+        common.tabela_expandida(
             ["Nº", "Nome", "Sexo", "Nascimento", "Turma", "Cartão"],
             [[aluno["numero"], aluno["nome"], aluno["sexo"],
               aluno["data_nascimento"] or "", aluno["turma"] or "",
               aluno["codigo_cartao"] or "—"] for aluno in alunos],
+            pesos=[1, 2.8, 1, 1.8, 1.2, 1.2],
         ),
     )
 
-    # Duas colunas: à esquerda os escalões (formulário + tabela), à direita as
-    # tabelas de turmas e de alunos, que antes ficavam isoladas a toda a largura.
+    # A atividade e os escalões ocupam a largura toda; as tabelas de turmas e de
+    # alunos ficam lado a lado, cada uma com metade do ecrã.
     return ft.Column(
         [
             common.titulo("Configurações"),
             bloco_atividade,
+            bloco_escaloes,
             ft.ResponsiveRow(
                 [
-                    ft.Column([bloco_escaloes], col={"xs": 12, "lg": 6},
+                    ft.Column([bloco_turmas], col={"xs": 12, "lg": 6},
                               spacing=14),
-                    ft.Column([bloco_turmas, bloco_alunos], col={"xs": 12, "lg": 6},
+                    ft.Column([bloco_alunos], col={"xs": 12, "lg": 6},
                               spacing=14),
                 ],
                 spacing=14,

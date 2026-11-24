@@ -324,6 +324,97 @@ def tabela(cabecalho: list[str], linhas: list[list]) -> ft.Control:
     )
 
 
+def _unidades_colunas(pesos: list[float], total: int = 12) -> list[int]:
+    """Converte pesos em colunas inteiras de uma grelha de 12."""
+    soma = sum(pesos) or 1
+    exatos = [peso * total / soma for peso in pesos]
+    colunas = [max(1, int(valor)) for valor in exatos]
+
+    # As unidades que sobram vão para as colunas com maior parte fracionária,
+    # para a grelha fechar sempre nas 12 colunas.
+    restos = sorted(range(len(colunas)),
+                    key=lambda i: exatos[i] - int(exatos[i]), reverse=True)
+    sobra = total - sum(colunas)
+    passo = 0
+    while sobra > 0:
+        colunas[restos[passo % len(restos)]] += 1
+        sobra -= 1
+        passo += 1
+    while sobra < 0:
+        maior = max((i for i in range(len(colunas)) if colunas[i] > 1),
+                    key=lambda i: colunas[i])
+        colunas[maior] -= 1
+        sobra += 1
+    return colunas
+
+
+def tabela_expandida(cabecalho: list[str], linhas: list[list],
+                     pesos: list[float] | None = None) -> ft.Control:
+    """Tabela que reparte a largura do cartão pelas colunas (sem scroll).
+
+    A `DataTable` de `tabela` fica com a largura do conteúdo e deixa uma faixa
+    vazia à direita do cartão. Aqui cada linha é uma `ResponsiveRow` de 12
+    colunas com as mesmas unidades, pelo que a tabela ocupa toda a largura e
+    os valores ficam alinhados com o respetivo cabeçalho.
+    """
+    pesos = pesos or [1] * len(cabecalho)
+    colunas = _unidades_colunas(pesos)
+
+    def celula(valor, coluna: int, e_cabecalho: bool = False) -> ft.Control:
+        return ft.Container(
+            content=ft.Text(
+                str(valor),
+                size=11.5 if e_cabecalho else 12,
+                weight=ft.FontWeight.BOLD if e_cabecalho else ft.FontWeight.NORMAL,
+                color="#FFFFFF" if e_cabecalho else TEXTO,
+                no_wrap=True,
+                overflow=ft.TextOverflow.ELLIPSIS,
+            ),
+            col=coluna,
+            padding=ft.padding.symmetric(horizontal=12, vertical=12),
+            alignment=ft.Alignment(-1, 0),
+        )
+
+    def linha(valores, e_cabecalho: bool = False) -> ft.ResponsiveRow:
+        return ft.ResponsiveRow(
+            [celula(valor, coluna, e_cabecalho)
+             for valor, coluna in zip(valores, colunas)],
+            spacing=0,
+            run_spacing=0,
+        )
+
+    if not linhas:
+        corpo = [
+            ft.Container(
+                content=ft.Text("(sem registos)", size=12, color=TEXTO_SUAVE,
+                                italic=True),
+                padding=ft.padding.symmetric(horizontal=12, vertical=14),
+            )
+        ]
+    else:
+        corpo = [
+            ft.Container(
+                content=linha(celulas),
+                border=ft.border.only(bottom=ft.BorderSide(1, CINZA_BORDA)),
+            )
+            for celulas in linhas
+        ]
+
+    return ft.Container(
+        content=ft.Column(
+            [
+                ft.Container(content=linha(cabecalho, True), bgcolor=VERDE_ESCURO),
+                *corpo,
+            ],
+            spacing=0,
+            tight=True,
+        ),
+        border=ft.border.all(1, CINZA_BORDA),
+        border_radius=10,
+        clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Formulários
 # ---------------------------------------------------------------------------
