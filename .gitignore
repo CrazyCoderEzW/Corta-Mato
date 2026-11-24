@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+
+# Dados de execução locais (base SQLite e registo de erros)
+dados/
+
+# Ficheiros gerados pela aplicação
+exportacoes/
